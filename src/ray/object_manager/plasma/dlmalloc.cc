@@ -142,6 +142,18 @@ void create_and_mmap_buffer(int64_t size, void **pointer, int *fd) {
     RAY_LOG(INFO) << "Preallocating all plasma memory using MAP_POPULATE.";
     flags |= MAP_POPULATE;
   }
+
+  // For fallback allocation, enable MAP_POPULATE to avoid
+  // SIGBUS issue when runing out of disk space.
+  if (allocated_once && RayConfig::instance().plasma_unlimited()) {
+    if (!MAP_POPULATE) {
+      RAY_LOG(WARNING)
+          << "Fallback allocation: MAP_POPULATE is not available on this platform.";
+    }
+    RAY_LOG(DEBUG) << "Enable MAP_POPULATE for fallback allocation.";
+    flags |= MAP_POPULATE;
+  }
+
   *pointer = mmap(NULL, size, PROT_READ | PROT_WRITE, flags, *fd, 0);
   if (*pointer == MAP_FAILED) {
     RAY_LOG(ERROR) << "mmap failed with error: " << std::strerror(errno);
