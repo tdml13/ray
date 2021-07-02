@@ -7,6 +7,10 @@
 #include <unistd.h>
 #endif
 
+#ifndef MAP_POPULATE
+#define MAP_POPULATE 0
+#endif
+
 #include "ray/object_manager/plasma/malloc.h"
 #include "ray/util/logging.h"
 
@@ -14,6 +18,7 @@ namespace plasma {
 
 ClientMmapTableEntry::ClientMmapTableEntry(MEMFD_TYPE fd, int64_t map_size)
     : fd_(fd), pointer_(nullptr), length_(0) {
+  RAY_LOG(DEBUG) << "MAP_POPULATE: " << MAP_POPULATE;
   // We subtract kMmapRegionsGap from the length that was added
   // in fake_mmap in malloc.h, to make map_size page-aligned again.
   length_ = map_size - kMmapRegionsGap;
@@ -27,7 +32,7 @@ ClientMmapTableEntry::ClientMmapTableEntry(MEMFD_TYPE fd, int64_t map_size)
   CloseHandle(fd.first);  // Closing this fd has an effect on performance.
 #else
   pointer_ = reinterpret_cast<uint8_t *>(
-      mmap(NULL, length_, PROT_READ | PROT_WRITE, MAP_SHARED, fd.first, 0));
+      mmap(NULL, length_, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_POPULATE, fd.first, 0));
   // TODO(pcm): Don't fail here, instead return a Status.
   if (pointer_ == MAP_FAILED) {
     RAY_LOG(FATAL) << "mmap failed";

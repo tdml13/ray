@@ -147,10 +147,10 @@ void create_and_mmap_buffer(int64_t size, void **pointer, int *fd) {
   // SIGBUS issue when runing out of disk space.
   if (allocated_once && RayConfig::instance().plasma_unlimited()) {
     if (!MAP_POPULATE) {
-      RAY_LOG(WARNING)
+      RAY_LOG(DEBUG)
           << "Fallback allocation: MAP_POPULATE is not available on this platform.";
     }
-    RAY_LOG(DEBUG) << "Enable MAP_POPULATE for fallback allocation.";
+    RAY_LOG(INFO) << "Enable MAP_POPULATE for fallback allocation.";
     flags |= MAP_POPULATE;
   }
 
